@@ -18,8 +18,8 @@ from copy import deepcopy
 from PIL import Image, ImageFont, ImageDraw
 from tqdm import tqdm
 from functools import partial
-from torch import Tensor, lerp
-from torch.nn.functional import cosine_similarity, relu, softplus
+from torch import Tensor, lerp, from_numpy
+from torch.nn.functional import cosine_similarity, relu, softplus, pad
 from modules import shared, processing, sd_models, sd_vae, images, sd_samplers, scripts,devices, extras
 from modules.ui import  plaintext_to_html
 from modules.shared import opts
@@ -544,6 +544,9 @@ def smerge(weights_a,weights_b,model_a,model_b,model_c,base_alpha,base_beta,mode
             if current_alpha == 0: continue
             theta_0[key] +=  torch.randn_like(theta_0[key].clone()) * current_alpha
 
+        elif calcmode == "DARE":
+            theta_0[key] = dare_merge(theta_0[key],theta_1[key],current_alpha,current_beta)
+
         ##### Adjust
         if any(item in key for item in FINETUNES) and fine:
             index = FINETUNES.index(key)
@@ -896,6 +899,48 @@ def multithread_smoothadd(key_and_alpha, theta_0, theta_1, threads, tasks_per_th
         del progress
 
     return theta_0, theta_1, False
+
+################################################
+##### DARE
+
+def dare_pad_tensors(tensor1, tensor2):
+    if len(tensor1.shape) not in [1, 2]:
+        return tensor1, tensor2
+
+    # Pad along the last dimension (width)
+    if tensor1.shape[-1] < tensor2.shape[-1]:
+        padding_size = tensor2.shape[-1] - tensor1.shape[-1]
+        tensor1 = pad(tensor1, (0, padding_size, 0, 0))
+    elif tensor2.shape[-1] < tensor1.shape[-1]:
+        padding_size = tensor1.shape[-1] - tensor2.shape[-1]
+        tensor2 = pad(tensor2, (0, padding_size, 0, 0))
+
+    # Pad along the first dimension (height)
+    if tensor1.shape[0] < tensor2.shape[0]:
+        padding_size = tensor2.shape[0] - tensor1.shape[0]
+        tensor1 = pad(tensor1, (0, 0, 0, padding_size))
+    elif tensor2.shape[0] < tensor1.shape[0]:
+        padding_size = tensor1.shape[0] - tensor2.shape[0]
+        tensor2 = pad(tensor2, (0, 0, 0, padding_size))
+
+    return tensor1, tensor2
+
+def dare_merge_tensors(tensor1, tensor2, p):
+    # Calculate the delta of the weights
+    delta = tensor2 - tensor1
+    # Generate the mask m^t from Bernoulli distribution
+    m = from_numpy(np.random.binomial(1, p, delta.shape)).to(tensor1.dtype)
+    # Apply the mask to the delta to get δ̃^t
+    delta_tilde = m * delta
+    # Scale the masked delta by the dropout rate to get δ̂^t
+    delta_hat = delta_tilde / (1 - p)
+    return delta_hat
+
+def dare_merge(tensor1, tensor2, p, lambda_val):
+    # alpha will be used as dropout rate (p) and beta as scaling factor (lambda_val)
+    t1, t2 = dare_pad_tensors(tensor1, tensor2)
+    merged = t1 + lambda_val * dare_merge_tensors(t1, t2, p)
+    return merged
 
 ################################################
 ##### Elementals

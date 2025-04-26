@@ -6,6 +6,7 @@
 - [smoothAdd](#smooth)
 - [extract](#extract)
 - [tensor](#tensor)
+- [DARE](#dare)
 
 ## normal
 ### _Available modes :_ All
@@ -199,8 +200,15 @@ In this setup, we directly use *the two differential models*: **LoRA B** and **L
 - ***α* = 0, *β* = 1**: Extracts features in **Model B** that are dissimilar to those in **Model C**.
 - ***α* = 1**: Reverses the focus between **Model B** and **Model C**.
 
+## <a id="dare">DARE</a>
+### _Available modes :_ weight sum only
+- This method implement "supermario merge" from this [repository](https://github.com/martyn/safetensors-merge-supermario)
 
-## tensor
+### Key Parameters
+- **alpha (*α*)**: is mapped to p, the dropout rate. Usual value between 0.1 and 0.2, start at 0.15
+- **beta (*β*)**: is mapped to λ, the scaling factor. Usual value between 2 and 4, start at 3
+
+## <a id="tensor">tensor</a>
 ### Available modes : weight sum only
 - This is an Elemental merge that goes beyond Elemental merging.
 As you know, each elemental tensor determines the features of an image in U-NET, and in normal merging, the values of each tensor are multiplied by a ratio and added together as shown below (normal). In the tensor method, the tensors are combined by dividing them by the ratio as shown in the figure below (tensor).

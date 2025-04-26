@@ -38,7 +38,7 @@ from scripts.mergers.model_util import filenamecutter, savemodel
 path_root = basedir()
 xyzpath = os.path.join(path_root,"xyzpresets.json")
 
-CALCMODES  = ["normal", "cosineA", "cosineB","trainDifference","smoothAdd","smoothAdd MT","extract","tensor","tensor2","self","plus random"]
+CALCMODES  = ["normal", "cosineA", "cosineB","trainDifference","smoothAdd","smoothAdd MT","extract","tensor","tensor2","self","plus random","DARE"]
 
 try:
     from backend.utils import load_torch_file
@@ -112,7 +112,7 @@ def on_ui_tabs():
                         with gr.Column(scale = 3), gr.Group() as alpha_group:
                             with gr.Row():
                                 base_alpha = gr.Slider(label="alpha", minimum=-1.0, maximum=2, step=0.001, value=0.5)
-                                base_beta = gr.Slider(label="beta", minimum=-1.0, maximum=2, step=0.001, value=0.25, interactive=False)
+                                base_beta = gr.Slider(label="beta", minimum=-1.0, maximum=4, step=0.001, value=0.25, interactive=False)
                         #weights = gr.Textbox(label="weights,base alpha,IN00,IN02,...IN11,M00,OUT00,...,OUT11",lines=2,value="0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5")
 
                     with gr.Accordion("Options", open=False):
@@ -566,7 +566,7 @@ def on_ui_tabs():
             "sum Twice": "(A*(1-alpha)+B*alpha)*(1-beta)+C*beta"
         }
         mode.change(fn=lambda mode,calcmode: [gr.update(info=mode_info[mode]), gr.update(interactive=True if mode in ["Triple sum", "sum Twice"] or calcmode in ["tensor", "tensor2"] else False)], inputs=[mode,calcmode], outputs=[mode, base_beta], show_progress=False)
-        calcmode.change(fn=lambda calcmode: gr.update(interactive=True) if calcmode in ["tensor", "tensor2","extract"] else gr.update(), inputs=[calcmode], outputs=base_beta, show_progress=False)
+        calcmode.change(fn=lambda calcmode: gr.update(interactive=True) if calcmode in ["tensor", "tensor2","extract", "DARE"] else gr.update(), inputs=[calcmode], outputs=base_beta, show_progress=False)
         useblocks.change(fn=lambda mbw: gr.update(visible=False if mbw else True), inputs=[useblocks], outputs=[alpha_group])
 
         def save_current_merge(custom_name, save_settings):

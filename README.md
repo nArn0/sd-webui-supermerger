@@ -101,9 +101,10 @@ You can set the calculation method. Please refer to [here](calcmode_en.md) for d
 |tensor| Instead of sum, exchange the tensors themselves at a certain ratio.   | Weight sum |
 |tensor2  |When the tensor has a large number of dimensions, exchanges are performed based on the second dimension. | Weight sum |
 |self  | The weight is multiplied by alpha.   |  Weight sum  |
+|DARE  | Dropout and Rescale weights from model B and add them to model A   |  Weight sum  |
 
 ### use MBW
-Block-by-blockc merging is enabled. Please set the weights in the Merge Block Weight. Enabling this will disable alpha and beta.
+Block-by-block merging is enabled. Please set the weights in the Merge Block Weight. Enabling this will disable alpha and beta.
 
 ### Options
 | Options         | Description                                       |
